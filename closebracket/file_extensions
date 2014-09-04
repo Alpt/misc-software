@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# This source code is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as published
+# by the Free Software Foundation; either version 2 of the License,
+# or (at your option) any later version.
+#
+# (c) Copyright 2006 AlpT (@freaknet.org)
+
+# 
+# `CB_EXT_PROG[x]' defines the program or function associated to the file
+# extensions listed in `CB_EXT_EXTS[x]'.
+#
+# `CB_EXT_PROG_II[x]' is the relative second action program or function.
+#
+#
+# The global variables (like $CB_MEDIA_PLAYER) and the global functions (like
+# cb_pdf) are taken from closebracket.conf
+#
+
+cbe=0
+
+# ] untarra and cd to `basename "$1" .tar.bz2`
+((cbe++))
+CB_EXT_PROG[$cbe]='cb_untarra'
+CB_EXT_PROG_II[$cbe]='cb_tarra'
+CB_EXT_EXTS[$cbe]='.tar.bz2 .tbz2 .tar .tar.gz .tgz .zip .rar .cbr'
+
+# Launch mplayer when "$1" is a video/mp3
+((cbe++))
+CB_EXT_PROG[$cbe]="$CB_MEDIA_PLAYER"
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.mpg .mpeg .avi .mp3 .ogg .wav .wmv .wmk .mov .ogm
+			   .ogg .mid .mp4 .mkv .flv'
+((cbe++))
+CB_EXT_PROG[$cbe]='abiword'
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.abw .doc'
+
+# .htm: Open $CB_BROWSER on X, $CB_TEXT_BROWSER on tty
+((cbe++))
+CB_EXT_PROG[$cbe]='cb_htm'
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.htm .html .xml .shtml'
+
+((cbe++))
+CB_EXT_PROG[$cbe]="$CB_EDITOR"
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.php .php3'
+
+# ] launches gqview when "$1" is an image, ][ launches gimp
+((cbe++))
+CB_EXT_PROG[$cbe]='cb_img_viewer'
+CB_EXT_PROG_II[$cbe]='cb_img_editor'
+CB_EXT_EXTS[$cbe]='.psd .xpm .tiff .gif .png .jpeg .bmp .jpg .ppm'
+
+# Launch bittorrent when "$1" is a .torrent. bittorrent-gtk when DISPLAY is
+# set, otherwise bittorrent-curses
+((cbe++))
+CB_EXT_PROG[$cbe]='cb_bittorrent'
+CB_EXT_PROG_II[$cbe]='bittorrent-curses'
+CB_EXT_EXTS[$cbe]='.torrent'
+
+# Launch xpdf when "$1" is a .torrent
+# if we are in tty, convert the pdf to html and use links
+((cbe++))
+CB_EXT_PROG[$cbe]='cb_pdf'
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.pdf'
+
+((cbe++))
+CB_EXT_PROG[$cbe]='ghostview'
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.ps'
+
+((cbe++))
+CB_EXT_PROG[$cbe]='emerge'
+CB_EXT_PROG_II[$cbe]="$CB_EDITOR"
+CB_EXT_EXTS[$cbe]='.ebuild'
+
+((cbe++))
+CB_EXT_PROG[$cbe]='xsvg'
+CB_EXT_PROG_II[$cbe]='inkscape'
+CB_EXT_EXTS[$cbe]='.svg'
+
+((cbe++))
+CB_EXT_PROG[$cbe]='xdvi'
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.dvi'
+
+((cbe++))
+CB_EXT_PROG[$cbe]='gvim'
+CB_EXT_PROG_II[$cbe]='vim'
+CB_EXT_EXTS[$cbe]='.tex'
+
+((cbe++))
+CB_EXT_PROG[$cbe]='wine'
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.exe'
+
+((cbe++))
+CB_EXT_PROG[$cbe]='djview'
+CB_EXT_PROG_II[$cbe]=''
+CB_EXT_EXTS[$cbe]='.djvu'

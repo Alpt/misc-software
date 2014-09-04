@@ -1,0 +1,184 @@
+#!/bin/bash
+# 
+# untarra: unpacks all the tarballs specified on the command line. The files
+# can be .tar.bz2, tar.gz, .tar, .zip, .rar
+#
+# Wed Mar  8 05:19:43 CET 2006
+# AlpT (@freaknet.org)
+#
+
+if [ -z "$1" ]
+then 
+	echo "Usage: untarra <packedfile>"
+	echo ""
+	echo "Examples: untarra closebracket.tar.bz2"
+	echo "          untarra file.zip"
+	echo "          untarra file.rar"
+	exit 1
+fi
+
+check_tar_broken()
+# author Filippo Giunchedi <filippo@esaurito.net>
+# released under public domain
+#
+# Lightly modified.  AlpT (@freaknet.org)
+#
+{
+	local OLD_IFS
+	local taropt fname outdir _outdir broken
+
+	OLD_IFS=$IFS
+	IFS=$'\n'
+	taropt="$1"
+	fname="$2"
+	for line in $(tar tf$taropt "$fname" ); do
+		outdir=$( echo "${line/#.\//}" | cut -d/ -f1 )
+		if [ -z "$_outdir" ]; then _outdir=$outdir; fi
+
+		if [ "$outdir" != "$_outdir" ]; then
+			broken=yes
+			break
+		fi
+	done
+	IFS="$OLD_IFS"
+
+	if [ $broken ]; then
+		fname=$( basename "$fname" | cut -d. -f1 )
+		if [ ! -d "$fname" ]; then mkdir "$fname"; fi
+		broken_tar_opt="-C $fname"
+		broken_new_dir="$fname/"
+		echo "$broken_new_dir"
+	else
+		broken_tar_opt=""
+		broken_new_dir=""
+	fi
+}
+
+# used by safe_unziprar()
+move_wholedir()
+{
+	local OLD_IFS
+	local ni last
+
+	last=$(echo "/$1/" |  sed -e 's#/\+#/#g' | awk -v FS='/' '{print $(NF-1)}')
+
+	if [ -d "$1" -a -d "$2/$last" ]
+	then
+		OLD_IFS=$IFS
+		IFS=$'\n'
+		for ni in $(find "$1" -mindepth 1 -maxdepth 1)
+		do
+			move_wholedir "$ni" "$2/$last"
+		done
+		IFS="$OLD_IFS"
+	else
+		mv "$1" "$2"
+	fi
+}
+
+safe_unziprar()
+{
+	local OLD_IFS
+	local command fname oldpath fullname basefname tfile tdir ndir nfile
+	local SRC DST ni
+
+	command="$1"
+	fname="$2"
+
+	oldpath="`pwd`"
+	fullname="`pwd`/$fname"
+	basefname=$( basename "$fname" | cut -d. -f1 )
+
+	tfile="$(tempfile)"
+	tdir="$tfile""dir"
+	mkdir $tdir
+	cd $tdir
+
+	# extract the archive here . 
+	$command "$fullname" > /dev/null
+
+	# Count the number of files and dirs of this current location
+	ndir=$(find ./ -type d -maxdepth 1 | wc -l)
+	nfile=$(find ./ -maxdepth 1 | wc -l)
+
+	if [ "$ndir" == "2" -a "$nfile" == "2" ]
+	then
+		# All ok, the package is sane
+		dirname=`ls -1`
+		SRC="$dirname"
+		DST="$SRC"
+	else
+		# The zip/rar file has been packed by a lazy dude
+		SRC="$tdir"
+		DST="$basefname"
+	fi
+
+	if [ -d "$oldpath/$DST" ]
+	then
+		OLD_IFS=$IFS
+		IFS=$'\n'
+		for ni in $(find "$SRC" -mindepth 1 -maxdepth 1)
+		do
+			move_wholedir "$ni" "$oldpath/$DST/"
+		done
+		IFS="$OLD_IFS"
+	else
+		mv "$SRC" "$oldpath/$DST"
+	fi
+
+	cd $oldpath
+	find $DST/
+
+	# Remove the temp files
+	rm -rf $tdir $tfile
+}
+
+while (($#))
+do
+	i="$1"
+	shift
+
+	if [ ! -f "$i" ]
+	then
+		echo "$i" doesn\'t exist
+		continue
+	fi
+
+	echo "$i" | grep -qi "tar$" &> /dev/null
+	if [ "$?" == 0 ]; then
+		check_tar_broken " "  "$i"
+		tar xfv "$i" $broken_tar_opt | sed -e "s#^#$broken_new_dir#"
+		continue
+	fi
+
+	echo "$i" | grep -qi "tar.bz2$\|tbz2$" &> /dev/null
+	if [ "$?" == 0 ]; then
+		check_tar_broken "j"  "$i"
+		tar xfjv "$i" $broken_tar_opt | sed -e "s#^#$broken_new_dir#"
+		continue
+	fi
+
+	echo "$i" | grep -qi "tar.gz$\|tgz$" &> /dev/null
+	if [ "$?" == 0 ]; then
+		check_tar_broken "z"  "$i"
+		tar xfzv "$i" $broken_tar_opt | sed -e "s#^#$broken_new_dir#"
+		continue
+	fi
+	
+	echo "$i" | grep -qi ".zip$" &> /dev/null
+	if [ "$?" == 0 ]; then
+		safe_unziprar "unzip " "$i"
+		continue
+	fi
+
+	echo "$i" | grep -qi ".rar$\|.cbr$" &> /dev/null
+	if [ "$?" == 0 ]; then
+		safe_unziprar "unrar x " "$i"
+		continue
+	fi
+
+	echo \"$i\" isn\'t a tar.bz2/tar.gz/tar/rar/zip file
+	exit 1
+done
+
+exit 0

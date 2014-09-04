@@ -1,0 +1,68 @@
+#!/bin/bash
+# by AlpT
+#
+
+######### CONFIGURE HERE #########
+if [ -z "$SHELL_LIST_FILE" ] ; then 
+# This is a file where you list all your known hostnames of nodes where you
+# have a shell account (one per line)
+	SHELL_LIST_FILE="$CLOSEBRACKET_DIR/shells"
+fi
+######### CONFIGURE HERE #########
+
+
+DEFAULT_USER=`whoami`
+
+if [ ! -f "$SHELL_LIST_FILE" ]
+then
+	echo "Please configure me ($0)"
+	exit 1
+fi
+
+if [ -z "$1" ]
+then
+	echo "Usage:   shell INITIAL_LETTERS_OF_THE_HOSTNAME [user]"
+	echo "UsageII: shell [user@]INITIAL_LETTERS_OF_THE_HOSTNAME"
+	exit 1
+fi
+
+if [ -z "$2" ]
+then
+	#user="$DEFAULT_USER"
+	if echo $1 | grep -q '@'; then
+		user=`echo $1 | cut -d '@' -f 1`
+		hname=`echo $1 | cut -d '@' -f 2`
+	else
+		hname=$1
+	fi
+else
+	hname=$1
+	user="$2"
+fi
+
+
+BIGLIST=`cat $SHELL_LIST_FILE | grep -v "^#\|^$"`
+for d in $BIGLIST
+do
+	if [ `echo $d | grep $hname` ]
+	then
+		server="$d"
+		break
+	fi
+done
+
+if [ -z "$server" ]
+then
+	exit 1
+else
+	echo "connecting to $user@$server"
+fi
+
+if [ -z "$user" ]
+then
+	ssh $server
+else
+	ssh $user@$server
+fi
+
+exit 0

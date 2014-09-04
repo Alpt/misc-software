@@ -1,0 +1,68 @@
+0.0.7
+
+Thu Oct 25 2007
+efphe (@freaknet.org)
+
+- install.sh works also for ~/.zshrc
+- svn dirs are not installed
+- writing a more elegant __cb_match_extension, working on bash and zsh
+- cb: working on zsh
+- [ "$?" = n ] -> [ $? -eq n]: working also on zsh 
+- [ a == b ] -> [ a = b ]: working also on zsh
+- incremented basic indexes from 0 to 1: arrays are now working on zsh
+- mistakes on file_extensions (cbe -> $cbe, $cbr -> $cbe): fixed
+
+0.0.6
+
+- directory bug solved: with the 0.0.5 it wasn't possible to change dir to
+  directories with spaces in their names
+
+0.0.5
+
+- Code optmisised and beautified (Iain Calder <{ic56} at {rogers.com}> )
+
+- cd, ls commands are now executed with eval, in this way if you redefine
+  them as alias, during an interactive shell session, they will be expanded.
+
+- Code cleaned: we now use the "$@" bash feature
+
+- removed the "bc -l" feature
+
+0.0.4
+
+- ] file:line  ==>  vim file +line
+
+- The untarra script will now repair broken tar/zip/rar archives, i.e. arhives
+  that would decompress files in ./
+  Thanks to http://people.debian.org/~filippo/btar for the inspiration
+
+
+0.0.3
+
+- An modular method to match file extensions has been implemented.
+  It is possible to associate multiple extensions to a program or a
+  function. Ex: associate ".jpg .bmp" to gqview and to the gimp, using
+  respectively the former as primary action and the latter as secondary.
+  	] picture.jpg    is equivalent to    gqview picture.jpg
+  	][ picture.jpg   is equivalent to    gimp  picture.jpg
+
+  The extensions list is kept in ~/.closebracket/file_extensions
+
+- The support for "ftp://" URI has been added.
+
+
+0.0.2
+
+- The support for .torrent files has been added. They are opened with
+  bittorrent and bittorrent-curses if you are respectively on X or in tty.
+
+- The support for .pdf files has been added. The default action is to open
+  them with xpdf. If you are in tty, it converts the pdf file to html and
+  opens it with links
+  
+- "] user@shell" is now parsed correctly
+
+
+0.0.1
+
+- initial release

@@ -1,0 +1,166 @@
+		        ]  Closebracket  ]
+			
+		     A shell shortcut definer
+	http://www.freaknet.org/alpt/src/utils/closebracket/
+
+
+Closebracket lets you define multiple shell actions in a single command to
+speed up the typing of the most repetitive shell commands.
+The command name of Closebracket is `]' and `][', that's because these
+characters are near the "Enter" key and it is easy to type them fast.
+
+`]' stands for "primary fire", while `][' is the secondary one.
+
+After few days you'll find Closebracket very addictive.
+
+Closebracket is dedicated to the God of Laziness, may He bless you (when He 
+feels to do it).
+
+
+*** Installation 
+
+Download the latest tarball from
+http://www.freaknet.org/alpt/src/utils/closebracket/tarball/
+
+Use the ./install.sh script to install it. It will copy the files in
+~/.closebracket and add some aliases in ~/.bashrc (or ~/.zshrc)
+
+*** Updating
+
+Just use ./install.sh (or install-rshells.sh).
+`closebracket.conf' will be overwritten but your `shells' file won't.
+
+*** Usage
+
+Since too many words are needed to describe all the actions that are included
+by default, I'll show you them by examples.
+Keep in mind that you can tune them and define your own actions by editing the
+~/.closebracket/closebracket.conf file.
+
+In the first line closebracket is used to activate an action. The second line
+is the equivalent of that action.
+
+---
+
+##
+###  Basic shell movements
+##
+
+$ ]
+$ ls	# ls current directory
+
+$ ][
+$ cd	# cd to home
+
+$ ] dir/
+$ cd dir/
+
+$ ][ dir/
+$ ls dir/
+
+$ ][ file
+$ cat file
+
+$ ][ non_existent_file
+$ vim non_existent_file
+
+##
+###  Remote shells
+##
+
+$ ] shell			# With closebracket you keep the list of the
+$ ssh shell.expanded.org	# name of your remote shells in 
+				# ~/.closebracket/shells. In this case we put
+				# "shell.expanded.org" in the list.
+				# Closebracket searches the closest match with
+				# the word you typed and then use that as the
+				# remote shell hostname.
+$ ] user@shell
+# ssh user@shell.expanded.org
+
+$ ] shell user
+$ ssh user@shell.expanded.org
+
+##
+###  Remote copy (scp/rsync)
+##
+
+$ ] shell:file
+$ vim scp://shell.expanded.org/file	# Beware of the Vim power
+
+$ ] user@shell:/path/file
+$ ] scp://user@shell.expanded.org/path/file
+
+$ ][ shell:dir/
+$ scp -r shell.expanded.org:dir/ .
+
+$ ][ shell:dir/ local_dir/
+$ scp -r shell.expanded.org:dir/ local_dir/
+
+$ ][ file1 file3 dir1 dir3 shell:remote_dir/
+$ scp -r file1 file3 dir1 dir3 shell.expanded.org:remote_dir/
+
+
+##
+###  URLs, mail addresses
+##
+
+$ ] http://URL
+$ firefox http://URL
+
+$ ][ http://URL
+$ wget http://URL
+
+$ ] email@address.org
+$ mutt email@address.org
+
+
+##
+###  File type based on extension
+##
+
+It is possible to associate multiple extensions to a program or a
+function. Ex: associate ".jpg .bmp" to gqview and to the gimp, using
+respectively the former as primary action and the latter as secondary.
+
+The extensions list is kept in ~/.closebracket/file_extensions
+
+
+$ ] pack.tar.gz				# This works for .tar, .tar.bz2,
+$ tar xfz pack.tar.gz; cd pack/		# .tar.gz, .tgz, .zip, .rar
+					# If the directory unpacked isn't the
+					# same of the filename of the tarball
+					# it understands that ^_-
+					
+$ ] file.pdf
+$ xpdf file.pdf			# If you are in tty, it converts the pdf file
+				# to html and opens it with links
+
+$ ] movie_or_mp3.ogg		# .avi, .mp3, .wav, .wmv, ...
+$ mplayer movie_or_mp3.ogg
+
+$ ] image.jpg			# .jpg, .png, .gif, ...
+$ gqview image.jpg		# if you are in tty it launches `seejpeg'
+
+$ ][ image.jpg
+$ gimp image.jpg
+
+$ ] file.htm			# .htm, .html, .php, ...
+$ firefox file.htm		# if you are in tty it launches `links' instead
+
+$ ] file.torrent
+$ bittorrent file.torrent	# if you are in tty, it launches
+				# bittorrent-curses
+
+$ ] file.abw 
+$ abiword file.abw
+
+You can also pass options to it:
+
+$ ] video.avi -nosound
+$ mplayer video.avi -nosound
+
+
+Enjoy the speed ^_^'
+
+AlpT (@freaknet.org)

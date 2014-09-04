@@ -1,0 +1,6 @@
+# Put the hostname of your remote shells here (one per line)
+# Put the most used on top
+
+#192.168.1.2
+#192.168.1.3
+#localhost

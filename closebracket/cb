@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# closebracket: a fast shell shortcut definer
+# http://www.freaknet.org/alpt/src/utils/closebracket/
+#
+# Closebracket let you define multiple shell actions in a single command to
+# speed up the typing of the most repetitive shell commands.
+# The command name of Closebracket is `]' and `][', that's because these
+# characters are near the "Enter" key and it is easy to type them fast.
+# 
+# All the actions are defined in $CB_CONF
+#
+# This source code is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as published
+# by the Free Software Foundation; either version 2 of the License,
+# or (at your option) any later version.
+#
+#(c) Copyright 2006 AlpT (@freaknet.org)
+#
+
+
+CB_CONF="$CLOSEBRACKET_DIR/closebracket.conf"
+
+if [ -z "${CB_ACTION[1]}" ]
+then
+	source $CB_CONF
+	source $FILE_EXTENSIONS_LIST
+fi
+
+case $1 in
+	I) SACT=('true' ${CB_ACTION[@]}); shift;;
+	II) SACT=('true' ${CB_ACTION_II[@]}); shift;;
+	*) echo "Don't use the cb script directly!"
+	   exit;;
+esac
+
+cb_idx=1
+com="${SACT[$cb_idx]}"
+
+while [ ! -z "$com" ]
+do
+    eval '$com "$@"'
+	if [ $? -eq $CB_OK ]
+	then
+		break
+	fi
+	((cb_idx++))
+    com="${SACT[$cb_idx]}"
+done
