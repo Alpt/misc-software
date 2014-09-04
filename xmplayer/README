@@ -1,0 +1,113 @@
+		             xmplayer 
+			
+		     A XMMS replacement in bash
+	http://www.freaknet.org/alpt/src/utils/xmplayer/
+
+
+The name of xmplayer derives from xm(ms)mplayer.
+
+Xmplayer executes, only once, mplayer in background and controls it
+through a FIFO. It supports all the (useful) features you'll find in XMMS and
+it is easily extendible.
+However, unlike XMMS, Xmplayer doesn't require any X server active. You can
+even use it from a remote shell. Indeed, this was the main reason for its
+development.
+
+Xmplayer has also some unique features like `jgrep' that lets you jump to the
+first "grepped" match of the playlist.
+
+*** Installation 
+
+Download the latest tarball from
+http://www.freaknet.org/alpt/src/utils/xmplayer/tarball/
+
+There are some advised aliases you can set up in your shell.
+Use "./xmplayer --alias" to get the complete list.
+
+*** Updating
+
+Just overwrite the old xmplayer file.
+
+*** Usage
+
+xmplayer --help
+---------------
+
+   Command line:
+
+        xmplayer [command]
+
+        You can pass xmplayer commands directly to command line, f.e:
+                  xmplayer help;  xmplayer help help; xmplayer play
+
+   Shell:
+        xmplayer -i || xmplayer shell || xmplayer -s
+
+        Reads one line at time from standrd input and execute
+        the given commands.
+
+Note: all your temporary files are kept in: /tmp/xmplayer/`whoami`.*
+
+Playlists
+---------
+
+A few words on the playlists management.
+Xmplayer keeps _two_ playlists.
+
+The first is the last _loaded_ playlist, i.e. the last playlist you created.
+For example:
+	xmplayer loadlist mylist.m3u
+	xmplayer load xjapan.mp3 album/
+the _loaded_ playlist will be `mylist.m3u' concatenated with xjapan.mp3 and
+all the files contained in album/.
+
+The second is instead the _current_ playlist: each time you issue a command
+which operates on any playlist, the current playlist will be updated.
+For example:
+	xmplayer rand
+the current playlist will now contain your last loaded playlist in a shuffled
+order.
+
+General use
+-----------
+
+Keeping in mind what we've in the above section, you can now take a look at
+the help and just use it:
+
+	xmplayer help
+
+Tip: if you use "xmplayer quit", then the next time you'll use xmplayer, it
+     will load the last played playlist and position.
+
+Examples
+--------
+
+xmplayer loadlist ~/mp3/lists/listXJAPAN.m3u	# Load the playlist
+xmplayer load ~/mp3/Er_Marchio_-_FTW.mp3 Tripz/ # Append in the loaded
+						# the single .mp3 file and all
+						# the files contained in Tripz/
+
+xmplayer play
+xmplayer rand
+
+xmplayer next 10		# jump 10 tracks ahead
+
+xmplayer jgrep crucify
+>>> Jumping to ' /home/alpt/mp3/X_japan/04-X JAPAN _ Crucify My Love.mp3'
+
+xmplayer cur			# display the position of the _current_ playlist
+>>> 1       04-X JAPAN _ Crucify My Love.mp3
+
+xmplayer curl			# display the position of the _loaded_ playlist
+>>> 87      04-X JAPAN _ Crucify My Love.mp3
+
+xmplayer savelist ~/mp3/lists/my_new_list.m3u
+
+xmplayer quote mute		# quote any of the `mplayer -input cmdlist' cmds
+
+
+EOF
+---
+Enjoy the freedom from X ^_^'
+
+AlpT (@freaknet.org)

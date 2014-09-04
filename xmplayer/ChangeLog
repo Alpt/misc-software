@@ -1,0 +1,38 @@
+0.0.4
+
+- When jumping to the last loaded playlist, xmplayer exits from shuffle mode.
+  This bug has been fixed.
+
+- If xmplayer is already running, the `play' command rewinds the current
+  track.
+
+
+0.0.3
+
+- Added the `jcgrep' command:
+
+	  jcgrep      --   Jump to the first matched entry of the
+	                   _current_ playlist. Useful to skip to the
+	                   next match
+
+- Fixed some regular expression bugs
+
+
+0.0.2
+
+- The `mute' and `seek' mplayer commands are now recognized.
+
+- jgrep supports now multiple patterns separated by spaces, f.e. 
+  `xmplayer jgrep danubio blu'
+
+- The support for a continous playlist has been added. If the current track is
+  the last one, `Next' will teleport on the first one. The opposite is for `Prev'.
+
+- Mutexes has been added: if two instances of xmplayer have been executed
+  nearly at the same time, they won't overlap, because one of the two will
+  wait the finish of the execution of the other.
+
+
+0.0.1
+
+- initial release

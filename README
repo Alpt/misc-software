@@ -6,7 +6,6 @@ Xchestival - XChestival is an improved version of xchat_speak designed for Itali
 
 Sucast - A collective-web-streaming-server written in ~60 lines of shell script, during the Italian hackmeeting 2007. 
 
-
 EvolvotronComplexity - This script mutates an initial random image in only one direction, that of the minimum redundancy, or in another words that of the maximum complexity. 
 
 Pwdrc - Pwdrc lets you executes your set of commands each time you walk in a directory with `cd'. You can associate a different set of commands to each directory. 
@@ -14,5 +13,12 @@ Pwdrc - Pwdrc lets you executes your set of commands each time you walk in a dir
 Xmplayer - A XMMS replacement in bash 
 
 Closebracket - Closebracket incorporates a number of scripts that are executed in different situations. For example, running closebracket with the name of a directory as argument will "cd" into it, while running closebracket without arguments will run "ls" and list the content of the current directory. There are many more other scripts. For example, running closebracket with the name of a .tar.gz file will untar the file and "cd" into the directory that is created. The aim of closebracket is to speed up the typing of the most repetitive shell commands by typing a a single command in their place. 
+
+
+Links: http://lab.dyne.org/Code/Hinezumi
+
+
+					--Alpt, 4 September 2014
+
 
 

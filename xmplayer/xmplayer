@@ -1,0 +1,586 @@
+#!/bin/bash
+#		             xmplayer 
+#			
+#		     A XMMS replacement in bash
+#	http://www.freaknet.org/alpt/src/utils/xmplayer/
+#
+#
+# The name of xmplayer derives from xm(ms)mplayer.
+# 
+# Xmplayer executes, only once, mplayer in background and controls it
+# through a FIFO. It supports all the (useful) features you'll find in XMMS and
+# it is easily extendible.
+# However, unlike XMMS, Xmplayer doesn't require any X server active. You can
+# even use it from a remote shell. Indeed, this was the main reason for its
+# development.
+# 
+# Xmplayer has also some unique feature like `jgrep' that lets you jump to the
+# first "grepped" match of the playlist.
+# 
+# AlpT (@freaknet.org)
+#
+
+##B#
+#### Advised aliases for xmplayer
+#
+#	alias xp="xmplayer play"
+#	alias xs="xmplayer stop"
+#	alias xu="xmplayer pause"
+#	alias xf="xmplayer next"
+#	alias xr="xmplayer rand"
+#	alias xz="xmplayer prev"
+#	alias xj="xmplayer jumpl"
+#	alias xc="xmplayer cur"		#display the current played file
+#	alias xg="xmplayer lgrep"	#display or greps the loaded playlist
+#	alias xjg="xmplayer jgrep"
+#	alias xjcg="xmplayer jcgrep"	#jump to the next match
+#
+##E#
+
+shuffle() {
+	cat $@ | awk 'BEGIN{srand()}{printf "%06d%s\n", rand()*1000000, $0}' | sort | cut -b 7-
+}
+
+mplayer_cmd()
+{
+	echo $@ > $ifile&
+}
+
+run_mplayer()
+{
+	local tries pid
+	[ ! -e $ifile ] && mkfifo $ifile
+
+	pid=$(< $pidfile)
+
+	if [ -z "$pid" ] || ! pidof mplayer | grep -q "\<$pid\>"
+	then
+		trap "die" SIGINT SIGQUIT SIGTERM
+		mplayer -input file=$ifile -idle -loop 0 $@ &> /dev/null &
+
+		while [ -z "$(pidof -s $MPLAYER_PATH)" ]
+		do
+			if [ "$tries" == 5 ]
+			then
+				echo Mplayer cannot be loaded. Aborting
+				abort
+			fi
+			((tries++))
+			sleep 0.$((RANDOM%300))
+		done
+		echo $(pidof -s $MPLAYER_PATH) > $pidfile
+
+		return 0
+	fi
+
+	return 1
+}
+
+save_cur_pos()
+{
+	#Save our current position
+	if [ -z "$1" ]
+	then
+		cfile=$(get_cur_file)
+		lastpos=$(get_cur_pos "$cfile")
+		echo $lastpos > $lastposfile
+	else
+		lastpos="$1"
+		echo $1 > $lastposfile
+	fi
+}
+
+close_mplayer()
+{
+	save_cur_pos
+
+	mplayer_cmd exit
+	mplayer_cmd quit
+
+	# erase the pid file
+	> $pidfile
+}
+
+abort()
+{
+	rm -f $mutex
+	exit $1
+}
+
+die()
+{
+	close_mplayer
+	abort $1
+}
+
+get_cur_file()
+{
+	local ret
+	ret=$(lsof  -c mplayer | egrep -v '/usr/|/dev/' | \
+	awk '{if($4 ~ /^[0-9]r/){ for(i=9; i<=NF; i++)printf $i" "; printf "\n"; }}'|\
+	sed -e 's/ *$//' -e 's#/.*/##g' | tr -d '\n')
+	echo $ret
+}
+
+get_cur_pos()
+{
+	local pattern
+	local pl
+
+	if [ -z "$2" ]
+	then
+		pl="$cur_playlist"
+	else
+		pl="$2"
+	fi
+
+	pattern=`echo $1 | sed -e 's/\([^A-Za-z0-9. +()]\)/\\\\\1/g'`
+	grep -n "$pattern" $pl | cut -d ':' -f 1 | line 2> /dev/null
+}
+
+get_cur_filepos()
+{
+	cfile=$(get_cur_file)
+	echo "`get_cur_pos "$cfile"`	$cfile"
+}
+
+get_curl_pos()
+{
+	get_cur_pos "$1" $playlist
+}
+
+get_curl_filepos()
+{
+	cfile=$(get_cur_file)
+	echo "`get_curl_pos "$cfile"`	$cfile"
+}
+
+jump_pos()
+{
+	local pl
+	local cmd
+	local pos
+
+	if [ -z "$2" ]
+	then
+		pl="$cur_playlist"
+	else
+		pl="$2"
+	fi
+
+	pos="$1"
+
+	#echo Jumping to position $pos in playlist $cur_playlist
+	cat $pl | awk -v N=$pos 'BEGIN { n=N; if(!(n ~ /[0-9]+/)) n=0; }
+	NR >= n { print $0; }' > $playlist_num.tmp
+
+	cat $pl | awk -v N=$pos 'BEGIN { n=N; if(!(n ~ /[0-9]+/)) n=0; }
+	NR < n { print $0; }' >> $playlist_num.tmp
+
+	mv $playlist_num.tmp $playlist_num
+
+	save_cur_pos $pos
+}
+
+jumpl_pos()
+{
+	local pl pos l
+
+	pos="$1"
+	pl="$playlist"
+
+	if [ "$shuffled" == "1" ]
+	then
+		# We are still in shuffle mode.
+		# Jump to $pos but inside randomized list
+		l=$(cat $pl | awk -v N=$pos 'BEGIN { n=N; if(!(n ~ /[0-9]+/)) n=0; }
+					     NR == n { print $0; }')
+		pl=$cur_playlist
+		pos=$(get_cur_pos "$l" $pl)
+	fi
+
+	jump_pos $pos $pl
+}
+
+jump_grep()
+{
+	local p
+	local pl
+
+	if [ -z "$2" ]
+	then
+		pl="$cur_playlist"
+	else
+		pl="$2"
+	fi
+
+	p=`cat $pl | nl -n ln | egrep -i "$1" | \
+		awk 'i<2{lines[++i]=$0;}; END {print lines[i]}'`
+	echo "Jumping to '`echo $p | awk '{$1=""; print $0;}'`'"
+	p=`echo $p | awk '{print $1}'`
+	jump_pos "$p" "$pl"
+}
+
+jumpl_grep()
+{
+	local pos l pl
+
+	jump_grep "$1" "$playlist"
+
+	if [ "$shuffled" == "1" ]
+	then
+		# We are still in shuffle mode.
+		# The list must by shuffled.
+
+		l=$(cat $playlist_num | line)
+		pl=$cur_playlist
+		pos=$(get_cur_pos "$l" $pl)
+		jump_pos $pos $pl
+	fi
+}
+
+# Jump to last position
+jump_last()
+{
+	jump_pos $(< $cur_playlist.wc) 
+}
+
+set_playlist()
+{
+	mplayer_cmd loadlist $1
+	cur_playlist="$1"
+	wc -l $cur_playlist > $cur_playlist.wc
+	echo $1 > $curlistfile
+	rm -f $pausedfile
+}
+
+do_cmd() {
+	[ -z "$1" ] && return
+
+	while [ -f "$mutex" ];
+	do
+		sleep 0.$((RANDOM%10))
+	done
+	trap "abort" SIGINT SIGQUIT SIGTERM
+	touch $mutex
+
+#	run_mplayer
+
+	cmd=`echo $@ | awk '{print $1}'`
+	arg=`echo $@ | awk '{for(i=2;i<NF;i++) printf "%s ", $i; print $i}'`
+
+	case $cmd in
+		# ## General:
+
+		help)        ## print this help. If a command name is given, it
+		    #        ## prints its help
+
+			gcmd="cat"
+			#awk '{if(/[:space:]*[a-z]+) *##/ || /[#] *##[:space:]*/)
+			#	print $0; }' | expand | 		\
+			[ ! -z "$arg" ] && gcmd="grep \"$arg\""
+			cat $XMPLAYER_PATH | eval $gcmd | expand |	\
+			egrep ' *[a-z]+\) *##|[#] +## *'    |	\
+			sed -e 's/)\( *\)##/\1--  /'		\
+			    -e 's/[#] ## *\(.*\)/\n\n  \1  \n/'	\
+			    -e 's/#\( \+\)## */"\1        /'     \
+			    -e 's/^ \+/  /' 
+			;;
+		quit|exit)   ## kill mplayer and xmplayer, saving the current position
+			echo Bye bye
+			die
+			;;
+
+		# ## Playlist controls:
+
+		stop)        ## stop the playing and kill mplayer
+			close_mplayer
+			echo Stopped
+			;;
+		play)        ## play the current track
+
+			if ! run_mplayer
+			then
+				# mplayer is already running, rewind the
+				# current track
+				mplayer_cmd seek 0 1
+			elif [ ! -z "$lastpos" ]
+			then
+				jump_pos $lastpos
+				set_playlist $playlist_num
+				lastpos=
+			else
+				set_playlist $cur_playlist
+			fi
+			echo Playing
+			;;
+		pause)       ## pause mplayer (without freeing /dev/dsp)
+			save_cur_pos
+			mplayer_cmd pause
+			if [ ! -f "$pausedfile" ]; then
+				echo Paused && touch $pausedfile
+			else
+				echo Playing && rm -f $pausedfile
+			fi
+			;;
+		next|forward)## jump to the next track of the _current_ playlist
+			if [ -z "$arg" ]
+			then
+				cfile=$(get_cur_file)
+				lastpos=$(get_cur_pos "$cfile")
+				if [ "$lastpos" == "$(< $cur_playlist.wc)" ]; then
+					jump_pos 1
+					set_playlist $playlist_num
+				else
+					mplayer_cmd pt_step +1 1
+					save_cur_pos $(($lastpos+1))
+				fi
+			elif [ ! -z "$arg" ] ;then 
+				mplayer_cmd pt_step +`echo $arg` 1
+				save_cur_pos
+			fi
+			echo Next track
+			;;
+		prev|back)   ## jump to the previous track of the _current_ playlist
+			if [ -z "$arg" ]; then
+				cfile=$(get_cur_file)
+				lastpos=$(get_cur_pos "$cfile")
+				if [ "$lastpos" == "1" ]; then
+					jump_last
+					set_playlist $playlist_num
+				else
+					mplayer_cmd pt_step -1 1
+					save_cur_pos $(($lastpos-1))
+				fi
+			elif [ ! -z "$arg" ]; then
+				mplayer_cmd pt_step -`echo $arg` 1
+				save_cur_pos
+			fi
+			echo Previous track
+			;;
+		rewind)      ## replay the current track
+			mplayer_cmd seek 0 1
+			;;
+		jump)        ## jump to the given position in the _current_ playlist
+			jump_pos $arg
+			set_playlist $playlist_num
+			echo Jumped to position $arg of the current playlist
+			;;
+		jumpl)       ## jump to the given position of the last loaded playlist
+			jumpl_pos $arg
+			set_playlist $playlist_num
+			echo Jumped to position $arg of the loaded playlist
+			;;
+		jgrep)       ## Jump to the first matched entry of the last
+		     #        ## loaded playlist using the given regexp as pattern
+			jumpl_grep "$arg"
+			set_playlist $playlist_num
+			;;
+		jcgrep)      ## Jump to the first matched entry of the
+		     #        ## _current_ playlist. Useful to skip to the
+		     #        ## next match
+			jump_grep "$arg"
+			set_playlist $playlist_num
+			;;
+		cur)         ## print the current played file and its position
+		   #        ## in the _current_ playlist
+			get_cur_filepos
+			;;
+		curpos)      ## print the current position in the _current_ playlist
+			cfile=$(get_cur_file)
+			echo `get_cur_pos "$cfile"`
+			;;
+		curl)        ## print the current played file and its position
+		    #        ## in the last loaded playlist
+			get_curl_filepos
+			;;
+		curlpos)     ## print the current position in the last loaded playlist
+			cfile=$(get_cur_file)
+			echo `get_curl_pos "$cfile"`
+			;;
+		curfile)     ## print the current played file
+			get_cur_file
+			;;
+
+		# ## Playlist: 
+
+		load)        ## load the give directories and files
+			for i in $arg
+			do
+				i=`echo $i`   # expand the ~
+				if echo $i | grep -q '^/'
+				then
+					pi="$i"
+				else
+					p=`pwd`
+					pi="$p/$i"
+				fi
+				
+				if [ -e "$pi" ]
+				then
+					echo $pi >> $playlist
+					echo File $i loaded
+				elif [ -d "$pi" ]
+				then
+					find $pi >> $playlist
+					echo Directory $i loaded
+				fi
+			done
+			set_playlist $playlist
+			;;
+		loadlist)    ## load the given playlist (.m3u, one file per line)
+			for i in $arg
+			do
+				[ -e "$i" ] && cat $i | grep -v '^#EXT' >> $playlist
+				echo Playlist $i loaded
+			done
+			set_playlist $playlist
+			;;
+		savelist)    ## save the playlist to file
+			echo "Saving playlist to $arg"
+			cp $playlist $arg
+			;;
+		list|printlist)  ## print the loaded playlist. The argument
+			      #            ## (if any) will be used to grep the list
+			pcmd="cat"; [ ! -z "$arg" ] && pcmd="egrep -i \"$arg\""
+			cat $playlist | nl | eval $pcmd
+			;;
+		curlist)     ## print the current playlist
+			pcmd="cat"; [ ! -z "$arg" ] && pcmd="egrep -i \"$arg\""
+			cat $cur_playlist | nl | eval $pcmd
+			;;
+		lgrep)       ## List grep: grep the current list using the
+		     #        ## given extended regexp. The output will be null
+		     #        ## if nothing is matched
+			cat $cur_playlist | nl | egrep -i "$arg"
+			;;
+		clear)       ## clear all playlists
+			close_mplayer
+			> $playlist
+			> $cur_playlist
+			rm -f "$playlist_rand"
+			> $playlist_num
+			> $curlistfile
+			> $lastposfile
+			echo Playlists cleared
+			;;
+		rand|shuffle)## randomize the playlist
+			if [ "$shuffled" == "0" ]
+			then
+				shuffle $playlist > $playlist_rand
+				set_playlist $playlist_rand
+				shuffled=1
+				echo Shuffle: on
+			else
+				set_playlist $playlist
+				rm -f "$playlist_rand"
+				echo Shuffle: off
+				shuffle=0
+			fi
+			;;
+		
+		# ## Mplayer: 
+		
+		seek)        ## seek to some place in the current track
+			mplayer_cmd seek $arg
+			;;
+		mute)        ## shuts up mplayer
+			mplayer_cmd mute $arg
+			;;
+		step)        ## the mplayer `pt_step' command
+			mplayer_cmd pt_step $arg
+			;;
+		quote)       ## send the given command to mplayer
+		     #        ## Use `mplayer -input cmdlist' to get the list
+			mplayer_cmd $arg
+			;;
+		esac
+	rm -f $mutex
+}
+
+#
+# Begin of the main() code
+#
+
+[ -z "$MPLAYER_PATH" ]  && MPLAYER_PATH="/usr/bin/mplayer"
+[ -z "$XMPLAYER_DIR" ] && XMPLAYER_DIR="`echo ~/.xmplayer/`"
+
+if test "$1" = "-h" -o "$1" = "--help"
+then
+        echo "Usage:"
+	echo "   Command line:"
+	echo ""
+        echo "        xmplayer [command]"
+	echo ""
+	echo "        You can pass xmplayer commands directly to command line, f.e:"
+	echo "	          xmplayer help;  xmplayer help help; xmplayer play"
+	echo ""
+	echo "   Shell:"
+        echo "        xmplayer -i || xmplayer shell || xmplayer -s"
+	echo ""
+	echo "        Reads one line at time from standrd input and execute"
+	echo "        the given commands."
+	echo ""
+	echo "   Env variables:"
+	echo "        MPLAYER_PATH: You can set MPLAYER_DIR to the absolute"
+	echo "                      path of your mplayer executable"
+	echo "                      (default is /usr/bin/mplayer)"
+	echo "        XMPLAYER_DIR: It is the directory where xmplayer will"
+	echo "                      keep all its temporary files (playlists,"
+	echo "                      pid files,...)."
+	echo "                      The default is $XMPLAYER_DIR"
+	echo ""
+        exit 0
+elif test "$1" = "-a" -o "$1" = "--alias" -o "$1" = "-alias" 
+then
+	cat $0 | sed -ne '/\#\#B\#/,/\#\#E\#/p'
+        exit 0
+fi
+
+
+XMPLAYER_PATH="$0"
+xmdir="$XMPLAYER_DIR"
+[ ! -d "$xmdir" ] && mkdir $xmdir
+mutex="$xmdir/mutex"
+ifile="$xmdir/mplayer_fifo.0"
+pidfile="$xmdir/mplayer.pid"
+playlist="$xmdir/loaded_playlist.m3u"
+playlist_rand="$xmdir/playlist_rand.m3u"
+playlist_num="$xmdir/playlist_num.m3u"
+curlistfile="$xmdir/curlist"
+lastposfile="$xmdir/lastpos"
+pausedfile="$xmdir/paused"
+
+# Load the last playlist file
+if [ -f $curlistfile ]
+then
+	cur_playlist=$(< $curlistfile)
+else
+	cur_playlist=$playlist
+fi
+
+# Set the last shuffled value
+if [ -f "$playlist_rand" ] 
+then
+	shuffled=1
+else
+	shuffled=0
+fi
+
+if [ -f $lastposfile ]
+then
+	lastpos=$(< $lastposfile)
+fi
+
+if [ "$1" == "-i" ] || [ "$1" == "shell" ] || [ "$1" == "-s" ]
+then
+	while [ 0 ]
+	do
+		printf '> '
+		read l
+		[ -z "$l" ] && abort
+		do_cmd $l
+	done
+else
+	do_cmd $@
+fi
