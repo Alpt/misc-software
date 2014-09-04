@@ -1,0 +1,25 @@
+			  SUCAST
+	  http://freaknet.org/alpt/src/misc/sucast/	
+
+
+A collective-web-streaming-server written in ~60 lines of shell script, during 
+the Italian hackmeeting 2007.
+
+Sucast shows a list of available video/audio files. When a client clicks on a
+link, the relative file will be opened with mplayer.
+
+The best way to use sucast is launching it inside rwm
+  http://www.freaknet.org/alpt/src/patches/rwm
+As result, any user will be able to play its video: a new mplayer window will
+be opened, the screen will be divided equally, while each window tries to
+occupy the greatest available space.
+
+Screenshot: http://www.freaknet.org/alpt/src/patches/rwm/screenshot-rwm.jpg
+
+To use it with rwm run ./install.sh, and then use ./run.sh
+
+*WARNING* configure sucast.sh before launching it (f.e, modify the INCOMING
+variable)
+
+Note: each IP may launch at maximum a single file. If the same IP launches
+      another one, the old will be killed to favour the new.
