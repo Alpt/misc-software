@@ -1,0 +1,36 @@
+#!/bin/bash
+# 
+#  Pwdrc cookbook
+#  http://www.freaknet.org/alpt/src/utils/pwdrc/
+#
+#  This cookbook sets the appropiate CVS env variable when you walk in the
+#  directory you chosed. It can be useful if you have accounts at more than
+#  one CVS server.
+#
+#  AlpT (@freaknet.org)
+
+PWDRC_RECURSE=1
+if [ -z "$OLD_CVS_CVSROOT" ]
+then
+	OLD_CVS_EDITOR="$EDITOR"
+	OLD_CVS_CVSROOT="$CVSROOT"
+	OLD_CVS_CVS_RSH="$CVS_RSH"
+fi
+
+#
+# *** CONFIGURE HERE YOUR OPTION ***
+EDITOR=/usr/bin/vim
+CVSROOT=":pserver:foo@foo.bar.org:/home/cvsroot"
+CVS_RSH="ssh"
+# *** CONFIGURE HERE YOUR OPTION ***
+#
+
+echo CVSROOT set to \"$CVSROOT\"
+
+close_pwdrc()
+{
+	EDITOR="$OLD_CVS_EDITOR"
+	CVSROOT="$OLD_CVS_CVSROOT"
+	CVS_RSH="$OLD_CVS_CVS_RSH"
+	echo CVSROOT set to \"$CVSROOT\"
+}

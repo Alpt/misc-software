@@ -1,0 +1,9 @@
+#!/bin/bash
+# 
+#  Pwdrc cookbook
+#  http://www.freaknet.org/alpt/src/utils/pwdrc/
+#
+#  Put this pwdrc file in you Mail/ directory, then walk in it. If there is
+#  new mail, mutt will open.
+
+mutt -Z

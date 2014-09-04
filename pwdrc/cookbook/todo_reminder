@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+#  Pwdrc cookbook
+#  http://www.freaknet.org/alpt/src/utils/pwdrc/
+#
+#  Prints a file, i.e. a TODO file, only once per shell session.
+#
+#  Examples:
+#
+#  cp todo_reminder ~/.`whoami`_pwdrc
+#  chmod 600 ~/.`whoami`_pwdrc
+#  echo Tomorrow I have to go to mirkwood > ~/TODO
+#
+#  cp ~/.`whoami`_pwdrc /tmp/
+#  echo a temporary todo > /tmp/TODO
+#
+#  cd ~/
+#  cd /tmp
+#
+
+### CONFIGURE HERE ###
+
+TODO_FILE="TODO"
+
+#
+# uncomment this if you want the output of your TODOs shuffled. If you keep
+# one entry per line, in the TODO, it is very useful, because changing the
+# order of their output keeps your attention
+#
+#SHUFFLE=1
+
+###
+
+cur_dir=$(echo $PWD | tr -d '/')
+cur_pwd=$(pwd | sed -s 's/.*\///')
+
+tf="TODO_FILE_PRINTED_""$cur_dir"
+
+if [ -f "$TODO_FILE" -a -z "${!tf}" ]
+then
+	echo "---- $cur_pwd $TODO_FILE -----"
+
+	if [ -z $SHUFFLE ]
+	then
+		cat $TODO_FILE
+	else
+		cat $TODO_FILE | awk 'BEGIN{srand()}{printf "%06d%s\n", rand()*1000000, $0}' | sort | cut -b 7- 
+	fi
+
+	echo "---- $cur_pwd $TODO_FILE -----"
+	eval $tf="1"
+fi

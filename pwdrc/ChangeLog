@@ -1,0 +1,19 @@
+- 0.0.3
+
+- recurse_pwdrc() has been added in the set of definable functions, it is
+  called each time the user walks into a sub-directory
+
+- todo_remider cookbook improved. It doesn't conflict anymore if used in
+  multiple directories and it support the shuffle of the output
+
+- 0.0.2
+
+- New cookbooks:
+  automount, cvsroot, gqview_imgdir, ls_alias, newmail_mutt_Z, todo_reminder
+  
+- Fixed a nasty bug which didn't allow to `cd' in directories whose name had a
+  spaces or special chars.
+
+- 0.0.1
+
+- First release

@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+#  Pwdrc cookbook
+#  http://www.freaknet.org/alpt/src/utils/pwdrc/
+#
+# When I enter in proj/src, I don't want to see all the backup files created
+# by Vim, so I use this pwdrc, which aliases ls as "ls -B"
+# Thanks to Guly and Godog ;^
+#
+PWDRC_RECURSE=1
+
+if [ -z "$old_ls_B" ]
+then
+	old_ls_B=`alias ls`
+fi
+alias ls='ls -B --color=auto'
+
+close_pwdrc() {
+	eval $old_ls_B
+}

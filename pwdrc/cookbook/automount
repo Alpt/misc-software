@@ -1,0 +1,48 @@
+#!/bin/bash
+# 
+#  Pwdrc cookbook
+#  http://www.freaknet.org/alpt/src/utils/pwdrc/
+#
+#  Automount without autofs \o/
+#  Put this pwdrc file in /mnt/cdrom/, then go there and say hi to `mount'.
+#  When you exit from /mnt/cdrom/* it will be automatically unmounted.
+#
+#  You can put this pwdrc also in /mnt/usbkey, /mnt/dvd, or whatever, 
+#  they will be all compatible.
+#  
+#  su
+#  cp automount /mnt/cdrom/.yourusername_pwdrc
+#  chown yourusername:users  /mnt/cdrom/.yourusername_pwdrc
+#  chmod 600 /mnt/cdrom/.yourusername_pwdrc
+#
+#  Note: be sure to have the right permission in /etc/fstab
+
+PWDRC_RECURSE=1
+
+close_pwdrc()
+{
+	mount | grep "$OLDPWD" > /dev/null
+	[ "$?" == 1 ] && return 0
+	
+	echo umounting lazily $OLDPWD
+	umount -l $OLDPWD
+}
+
+
+mount | grep "$PWD"
+if [ "$?" == 0 ] 
+then
+	echo $PWD is already mounted
+	return 0
+fi
+
+grep $PWD /etc/fstab > /dev/null
+if [ "$?" == 1 ]
+then
+	echo We cannot mount $PWD, it is not present in /etc/fstab
+	return 0
+fi
+
+echo mounting $PWD
+mount `pwd` 
+cdd . #refresh. Do not use `cd' or might end up in a deadly loop

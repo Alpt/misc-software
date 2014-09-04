@@ -1,0 +1,162 @@
+#!/bin/sh
+#			Prayishtar
+#  How to reach the Internet anonymously from a hostile network
+#	 http://freaknet.org/alpt/src/utils/prayishtar
+#
+# This script forwards ALL your Internet traffic over secure SSH tunnels.
+#
+# ** Requirements **
+#  You need one trusted SSH servers (`myhome') and possibly another one with a
+#  BIG BIG (`bigbwhost').
+#  You also need OpenSSH >= 4.3 on both this localhost and on `myhome'.
+#  Be sure also to have the support for /dev/tun, iptables and LARTC.
+# 
+# ** This is what we do **
+#  We forward all of our Internet traffic trough a SSH vpn created with
+#  `myhome' and we use `bigbwhost' as a SSH proxy for applications which require
+#  a big bandwidth (like browsers):
+#
+# 	All outgoing Internet traffic -> SSH VPN -> myhome -> INTERNET
+#
+#	All outgoing http traffic -> SSH SOCKS proxy -> bigbwhost -> INTERNET
+# 
+# ** TODO **
+#  Use Tor to create the SSH connections
+#
+# ** Usage **
+#  The first command:
+# 	  # prayishtar  myhomehost 
+#  If you have available the `bigbwhost' use instead:
+# 	  # prayishtar  myhomehost bigbwhost bighostuser
+#  f.e.:
+#	  # prayishtar home.dyndns.org mybigserver.org foo
+#
+#  You can also configure directly this script and launch it with no arguments:
+#	  # prayishtar
+# 
+# 2) If you have the `bigbwhost', in the browser set a localhost:8080 SOCKS proxy.
+# 
+# 3) You are done! Cryptolized trough SSH juicy tunnels. Even your dns query
+#    will be encrypted!
+#    Enjoy ^_^
+#
+# 4) Use "prayishtar stop" to clean the mess created by this script.
+#
+#
+# AlpT (@freaknet.org)
+#
+
+
+########### CONFIGURE HERE ################
+myhome=""	# the hostname of your home server, f.e. home.dyndns.org
+
+bigbwhost=""	# your big-bandwidth server. Leave blank if you don't have one
+bighostuser=""	# the username used to access to your big-bandwidth server
+
+tuniphome=10.0.0.2     # The IP for the tun interface that ssh will open at
+		       # your home server. Choose a good IP that doesn't
+		       # collide with your home network.
+
+tuniplocal=10.0.0.3    # The IP for the tun interface that ssh will open here,
+		       # at localhost
+
+tunipnet="10.0.0.0/8"  
+########### CONFIGURE HERE ################
+
+VERSION="v0.2b"
+
+die()
+{
+	echo "$@"
+	rm -f /tmp/prayishtar_default_gw
+	exit 1
+}
+
+if test "$1" = "clean" -o "$1" = "stop"
+then
+	ip rule del lookup 213
+	iptables -D POSTROUTING -t nat -j MASQUERADE -o ! lo
+	iptables -D OUTPUT -t mangle -p tcp --dport 22 -j MARK --set-mark 0x71
+	ip route del $tunipnet dev tun2 proto kernel  scope link  src $tuniplocal
+	ip route del default 
+	ip route del default table 213
+	ip route replace $(< /tmp/prayishtar_default_gw)
+	exit 
+fi
+
+if ! test -z "$1"
+then
+	myhome="$1"
+fi
+
+if ! test -z "$2"
+then
+	bigbwhost="$2"
+fi
+if ! test -z "$3"
+then
+	bighostuser="$3"
+fi
+
+if test $(id -u) != 0
+then
+	echo "Root privileges needed."
+	echo "Get them."
+	exit 1
+fi
+
+echo "Using myhome=$myhome and bigbwhost=$bighostuser@$bigbwhost"
+if test -z "$myhome"
+then
+	echo ""
+	echo "[!] Please configure this script ( \"$0\" )"
+	exit 1
+fi
+if ! test -z "$bigbwhost"
+then
+	if test -z "$bighostuser" 
+	then
+		echo ""
+		echo "[!] Please specify the username for the '$bigbwhost' server"
+		exit 1
+	fi
+fi
+
+homeip=`host $myhome | cut -d ' ' -f 4`
+bigbwhostip=`host $bigbwhost | cut -d ' ' -f 4`
+myinsecuregw=`ip route | grep default | cut -d ' ' -f 3`
+
+echo ""
+
+echo "Opening ssh tunnel"
+modprobe tun
+remotecmd="modprobe tun; sleep 1; ifconfig tun2 $tuniphome"
+remotecmd="$remotecmd; iptables -A POSTROUTING -t nat -j MASQUERADE -o ! lo"
+remotecmd="$remotecmd; ip route replace $tunipnet dev tun2 proto kernel  scope link  src $tuniphome"
+ssh -fnw 2:2 $myhome "$remotecmd" || die "Could not set up the SSH vpn"
+sleep 1
+ifconfig tun2 $tuniplocal
+
+echo "Setting routes"
+ip route replace $tunipnet dev tun2 proto kernel  scope link  src $tuniplocal
+ip route | grep default | line > /tmp/prayishtar_default_gw
+ip route del default 
+ip route replace default via $tuniphome dev tun2
+
+echo "Setting iptables"
+# Do not send ssh traffic over the ssh tunnel ;)
+iptables -A POSTROUTING -t nat -j MASQUERADE -o ! lo
+iptables -A OUTPUT -t mangle -p tcp --dport 22 -j MARK --set-mark 0x71
+ip rule add from all fwmark 0x71 lookup 213
+ip route replace default via $myinsecuregw table 213 || die "Could not set default route"
+
+if ! test -z "$bigbwhost"
+then 
+echo ""
+echo "Creating SOCKS to $bighostuser@$bigbwhost"
+ssh -fnN $bigbwhostip -D 8080 -l $bighostuser || die "Could not set up the SOCKS proxy"
+echo "Remember to set the localhost:8080 SOCKS proxy in your browser"
+fi
+
+echo ""
+echo "All done!"

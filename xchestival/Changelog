@@ -1,0 +1,78 @@
+Xchestival : http://www.freaknet.org/alpt/src/xchestival/
+
+0.0.8
+- Install.sh perfezionato. Adesso il file festival-it.tar.bz2 di 20Mb viene
+  wgettato dall'install.sh, in questo modo non c'e' bisogno di prendersi 20Mb
+  di bz2 solamente per avere i perl o la documentazione.
+- Fixato un piccolo bug che faceva crashare xchat od irssi quando veniva usato
+  il comando /muto consecutivamente.
+
+0.0.7
+- Leggete il README per i nuovi comandi!
+
+- /parlasoloin #CHAN
+
+- /solotesto
+
+- /parlatutto
+
+- Nuove associazioni
+
+- Suchen
+
+0.0.6
+- Da adesso irssi e' supportato. Ale' o/
+
+0.0.5
+- Leggete il README per i nuovi comandi!
+
+- Adesso quando viene usato il comando /muto, il parlato viene interrotto
+  immediatamente, perche' viene killato festival ;^
+  
+- Il codice per gestire le query ora esiste.
+
+- /muto NICK: Disabilita la lettura nella query con il NICK specificato.
+
+- Xchestival usa un file esterno (di default: ~/.xchat2/xchestival.sub) per le
+  associazioni. Il file di associazioni puo' essere caricato da xchat con il
+  comando /associazioni, al load di xchat_speak.pl viene caricato quello di
+  default. Esiste anche il comando /associa che puo' essere usato per
+  aggiungere al volo nel file nuove associazioni e renderele da subito
+  effettive.
+  
+- Con il comando /seleziona "STRINGA"  e' possibile far leggere solo le frasi
+  che contengono la STRINGA immessa. Se nessuna stringa viene specificata allora 
+  tutte le frasi saranno nuovamente lette.
+  
+- Adesso le lunghe ripetizioni di lettere vengono gestite meglio.
+
+- Regexp della morte migliorata, ora legge anche "le frasi tra virgolette" e
+  (le frasi tra  parentesi)
+
+
+0.0.4
+- Quando nella frase era presente una faccina fatta con un ':', la regexp si
+  rompeva e quindi xchestival ripeteva la frase due volte, ora e' fixato.
+- Ora Le frasi con punti esclamativi ed interrogativi vengono gestite meglio.
+- Adesso le "y" vengono sostituite con le "i".
+
+0.0.3
+- Aggiunto il comando di esclusione dei canali.
+- Ora xchestival usa una queue per prebuffering e poi spara nella pipe di
+  festival, in questo modo i canali vengono gestiti tutti separatamente.
+  Ora, avendo la queue e' viene flushato direttamente tutto quello
+  che sta' per essere detto su un canale appena viene usato /muto #canale
+- Piu' faccine supportate ;)
+- Regexp della morte migliorata.
+- Aggiunto  il test della voce mbrola in install.sh
+- Strip delle cazzate dai nick
+- Varie ed eventuali.
+
+0.0.2
+- Regexp della morte aggiunte
+- Aggiunte le voce mbrola.
+- Comandi tradotti in italiano
+- Readme riscritto
+
+0.0.1
+- E xchestival e' nato, dopo un pomeriggio sprecato.

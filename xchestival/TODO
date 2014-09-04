@@ -1,0 +1,7 @@
+
+- Passare ogni singola parola ad ispell, e vedere se ci sono piu' parole italiane
+  od inglesi. Se sono piu' quelle inglesi, allora pronuncia la frase con la voce
+  inglese.
+
+- <scinziatu> un'altra idea potrebbe essere: registrare cose tipo le risate in
+  un wav e miscelare le cose insieme

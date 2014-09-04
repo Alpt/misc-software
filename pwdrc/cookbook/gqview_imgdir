@@ -1,0 +1,43 @@
+#!/bin/bash
+#  Pwdrc cookbook
+#  http://www.freaknet.org/alpt/src/utils/pwdrc/
+#
+#  If you have an img/ directory where you keep all your pictures, than you'd
+#  like to start gqview when you walk in it.
+#  This script start gqview only if you are in X, when you walk off from the
+#  img/ directory, gqview is killed! ;)
+#
+#  AlpT (@freaknet.org)
+
+PWDRC_RECURSE=1
+MY_IMG_PWD="$PWD"
+
+close_pwdrc()
+{
+	if [ -f $MY_IMG_PWD/.gq_view_img_run ]
+	then
+		kill `cat $MY_IMG_PWD/.gq_view_img_run`
+		rm $MY_IMG_PWD/.gq_view_img_run
+		unset gq_view_img_run
+	fi
+}
+
+if ! [ -z $gq_view_img_run ]
+then
+	echo gqview already running
+	return 0
+fi
+
+if [ -f .gq_view_img_run ]
+then
+	echo There is another instance of gqview already running.
+	echo If it is not, delete `pwd`/.gq_view_img_run
+	return 0
+fi
+
+if ! [ -z "$DISPLAY" ]
+then 
+	gqview&
+	gq_view_img_run="1"
+	echo `pidof gqview | cut -f 1 -d ' '` > .gq_view_img_run
+fi

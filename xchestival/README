@@ -1,0 +1,199 @@
+
+
+		     (-		xchestival 	 -)
+			     Italian version
+
+
+Xchestival e' un insieme di vari pezzi: uno script per xchat ed irssi
+che lo interfaccia a Festival, i fonemi italiani, ed altre cose, che 
+messe insieme, permettono a xchat ed a irssi di "parlare", leggendo 
+cio' che viene scritto sui canali e sulle querty.
+
+xchat/irssi + xchat_speak + It-festival = xchestival ;)
+
+potete scaricarlo da qui:
+http://freaknet.org/alpt/src/xchestival/files/xchestival-0.0.8.tar.bz2
+
+
+*** Installazione
+
+Assicuratevi di avere festival ed mbrola installati.
+Festival lo potete scaricare qui:
+http://www.cstr.ed.ac.uk/projects/festival/
+
+Mentre mbrola prendetelo da qui:
+http://tcts.fpms.ac.be/synthesis/mbrola.html
+
+Se usate la pura ed aurea Slackware potete installare sia festival che mbrola
+usando i tre .tgz che trovate qui:
+http://freaknet.org/alpt/src/xchestival/files/xchestival-slack
+
+Se usate Debian, allora dovete ringraziare Scinziatu che ha creato i .deb
+appositamente per voi, seguite queste istruzioni:
+http://freaknet.org/alpt/src/xchestival/files/xchestival-deb/readme
+
+Se siete su gentoo od usate emerde, potete comodamente lanciare:
+# emerge festival mbrola
+
+Successivamente, prendete l'ultima versione di xchestival da qui:
+http://freaknet.org/alpt/src/xchestival/files/
+
+Una volta scaricato, scompattatelo con 
+
+   tar xjvf xchestival-0.0.8.tar.bz2
+
+entrate nella dir
+
+   cd xchestival
+
+diventate root:
+
+   su root
+
+e lanciate 
+
+   ./install.sh
+
+questo installera' tutto il necessario.
+
+-- Su xchat:
+Per usarlo, aprite xchat e caricate lo script perl xchat_speak.pl, che 
+si trova nella directory xchestival. con Xchat 1.8.11, andate sul menu
+Scripts & Plugins, poi Load Perl Script ... 
+
+Se volete farlo caricare automaticamente all'apertura di xchat 
+copia il .pl in $HOME/.xchat/
+
+Infine, modificate il .pl per cambiare le variabili di default.
+
+Se avete gia' tutto il necessario installato e volete prendervi solo lo script,
+andate qua: 
+http://freaknet.org/alpt/src/xchestival/files/xchat_speak.pl
+
+-- Su irssi:
+Copiate irssi_speak.pl in ~/.irssi/scripts/ (assicuratevi che la directory
+scripts esista).
+Modificate le variabili di configurazione del .pl.
+
+Caricatelo con: /run irssi_speak
+
+Lo script si trova qua:
+http://freaknet.org/alpt/src/xchestival/files/irssi_speak.pl
+
+
+*** Info aggiuntive:
+
+La voce in lingua italiana viene da qui:
+http://www.csrf.pd.cnr.it/TTS/It-FESTIVAL.htm
+
+Lo script originale per interfacciare xchat a festival viene da qui:
+http://www.nogas.org/xchat_speak/
+
+
+*** Modalita' d'uso:
+
+In xchat carica lo script con:
+/load /path/to/script/xchat_speak.pl
+
+In irssi carica lo script con (devi averlo in ~/.irssi/scripts/):
+/run irssi_speak.pl
+
+I comandi sono:
+
+/velocita SPEED 	Setta la velocita' di lettura a `SPEED', 
+			e' meglio usare i valori compresi tra 
+			0.70 e 1.50. Se usi 3.00 diventa tutto moooolllltooooo
+			LENTOOOO.
+			
+/voce VOICE		Seleziona la voce per la lettura, quelle disponibili
+			sono:
+			"uomo" == voce femminile italiana
+			"donna" == voce maschile italiana
+			"uomo_robot" == voce maschile di un robot
+			"donna_robot" == voce femminile di un robot
+			"inglese" == american dude
+			
+/muto [#CHAN]		Disabilita la lettura del canale `#CHAN' specificato.
+			Se nessun canale viene specificato allora tutti saranno
+			disabilitati.
+
+/muto NICK		Disabilita la lettura della query del `NICK'
+			specificato.
+
+/parla [#CHAN]		[ri]abilita la lettura del canale `#CHAN'. Se nessun
+			canale e' specificato, e' riabilitata la lettura globale.
+
+/parlasoloin #CHAN	Legge solamente quello che viene detto nel canale
+			`#CHAN' e disabilita tutti gli altri. Equivale ad
+			/muto; /parla #CHAN
+
+/censure		Mostra l'elenco dei canali disabilitati.
+
+/solotesto		Non legge i Join, Part, Quit, Topic, cambio Nick.
+
+/parlatutto		Legge i Join, Part, Quit, Topic, cambio Nick.
+
+/seleziona [STRINGA]    Legge solo le frasi che contengono la `STRINGA' immessa.
+			Se nessuna stringa viene specificata allora tutte le
+			frasi saranno nuovamente lette. Ad esempio:
+			/seleziona MIONICK, leggera' solo le frasi dove e'
+			presente il MIONICK.
+
+
+Xchestival usa un file di sostituzioni (xchestival.sub) che di default viene
+copiato in /usr/share/xchestival/ ed in ~/.xchat2/ e in ~/.irssi/
+durante l'installazione.
+Puoi modificarlo a tuo piacimento per aggiungere nuove associazioni 
+(ricordati di spedirmi il diff ;)
+Nel file vi e' una sostituzione per linea, secondo la seguente sintassi:
+----------------------------
+# Questo e' un commento.
+STRINGA == NUOVA_STRINGA
+# Ad esempio:
+xche' == perche'
+
+# Ora aggiungiamo uno smile:
+SMILE: ;) == ride
+-----------------------------
+Quindi ogni volta che xchat_speak.pl leggera' "xche'", festival dira' "perche'".
+L'unica accortezza che bisogna avere riguarda gli smiles: tutti gli smile devono 
+avere il prefisso `SMILE: ' ad inizio riga. Ricordati che gli smile vengono
+letti in questo modo: "NICK SOSTITUZIONE_SMILE", quindi una frase del tipo:
+"<AlpT> ;)" viene letta come "Alpt ride".
+
+Il file ~/.xchat2/xchestival.sub (o ~/.irssi/xchestival.sub) viene caricato 
+automaticamente all'avvio dello script. Se il file non viene trovato allora lo
+script provera' a caricare /usr/share/xchestival/xchestival.sub.
+
+/associazioni [FILE]	Carica tutte le associazioni presenti nel `FILE'.
+			Se il `FILE' non viene specificato il `FILE' caricato
+			sara' quello di default (~/.xchat2/xchestival.sub)
+			
+/associa      STRINGA   Aggiunge la nuova associazione `STRINGA' nel file di
+			associazioni caricato. La nuova associazione e'
+			immediatamente utilizzata. La sintassi e' la stessa del
+			file di associazioni, ad esempio:
+			/associa SMILE: ^_- == fa' l'occhiolino
+
+
+*** Autori:
+
+xchestival e' stato scritto da:
+
+AlpT (@freaknet.org),
+
+con l'aiuto essenziale di:
+
+asbesto (@freaknet.org), per il supporto umano, spirituale e di design, 
+sandman (@freaknet.org), per le regex della morte,
+scinziatu (@freaknet.org), per la pacchettizzazione debian ed il supporto mbrola,
+ram (@freaknet.org), per l'ottimizzazione delle espressioni e dei baci,
+skler (@freaknet.org), per l'aggiunta dei comandi (/solotesto e /parlatutto).
+
+Tutti noi facciamo parte del Freaknet \o/:
+http://www.freaknet.org
+
+Mandate insulti, proteste, poesie, codice, lettere d'amore, francobolli e
+quant'altro ad:  alpt ( @freaknet.org ).
+
+Cya ^_^

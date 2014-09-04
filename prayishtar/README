@@ -1,0 +1,48 @@
+#			Prayishtar
+#  How to reach the Internet anonymously from a hostile network
+#	 http://freaknet.org/alpt/src/utils/prayishtar
+#
+# This script forwards ALL your Internet traffic over secure SSH tunnels.
+#
+# ** Requirements **
+#  You need one trusted SSH servers (`myhome') and possibly another one with a
+#  BIG BIG (`bigbwhost').
+#  You also need OpenSSH >= 4.3 on both this localhost and on `myhome'.
+#  Be sure also to have the support for /dev/tun, iptables and LARTC.
+# 
+# ** This is what we do **
+#  We forward all of our Internet traffic trough a SSH vpn created with
+#  `myhome' and we use `bigbwhost' as a SSH proxy for applications which require
+#  a big bandwidth (like browsers):
+#
+# 	All outgoing Internet traffic -> SSH VPN -> myhome -> INTERNET
+#
+#	All outgoing http traffic -> SSH SOCKS proxy -> bigbwhost -> INTERNET
+# 
+# ** TODO **
+#  Use Tor to create the SSH connections
+#
+# ** Usage **
+#  The first command:
+# 	  # prayishtar  myhomehost 
+#  If you have available the `bigbwhost' use instead:
+# 	  # prayishtar  myhomehost bigbwhost bighostuser
+#  f.e.:
+#	  # prayishtar home.dyndns.org mybigserver.org foo
+#
+#  You can also configure directly this script and launch it with no arguments:
+#	  # prayishtar
+# 
+# 2) If you have the `bigbwhost', in the browser set a localhost:8080 SOCKS proxy.
+# 
+# 3) You are done! Cryptolized trough SSH juicy tunnels. Even your dns query
+#    will be encrypted!
+#    Enjoy ^_^
+#
+# 4) Use "prayishtar stop" to clean the mess created by this script.
+#
+#
+# AlpT (@freaknet.org)
+#
+
+
