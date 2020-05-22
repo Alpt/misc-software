@@ -1,5 +1,4 @@
 				- Pwdrc -
-		http://www.freaknet.org/alpt/src/utils/pwdrc
 
 
 Pwdrc lets you executes your set of commands each time you walk in a directory
@@ -61,7 +60,7 @@ cdd pkg/
 
 *** INSTALLATION
 
-Copy http://freaknet.org/alpt/src/utils/pwdrc/pwdrc.sh in /yourpath/to/pwdrc/
+Copy pwdrc.sh in /yourpath/to/pwdrc/
 
 Put the code below at the end of your .bashrc:
 
@@ -70,8 +69,8 @@ source /yourpath/to/pwdrc/pwdrc.sh
 
 *** COOKBOOK
 
-Go at http://freaknet.org/alpt/src/utils/pwdrc/cookbook/
-there are some useful pwdrc file you can use.
+See the directory cookbook/ included in these sources.
+There are some useful pwdrc file you can use.
 
 --
 AlpT (@freaknet.org)
