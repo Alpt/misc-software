@@ -13,7 +13,7 @@
 #
 
 IAM=`whoami`
-alias_file=".$IAM""_pwdrc"
+pwdrc_script=".$IAM""_pwdrc"
 pwdrc_recurse="0"
 pwdrc_recurse_idx="0"
 
@@ -22,10 +22,10 @@ pwdrc_exec_recurse_function() {
 
 	for ((ii=1; ii <= $pwdrc_recurse_idx; ii++))
 	do
-		if [ "${PWDRC_REC_FUNC_ARRAY[$ii]}" != 0 ]
+		if [ "${pwdrc_rec_func_array[$ii]}" != 0 ]
 		then
 			# Execute recurse_pwdrc()
-			eval "${PWDRC_REC_FUNC_ARRAY[$ii]}"
+			eval "${pwdrc_rec_func_array[$ii]}"
 			recurse_pwdrc
 			unset recurse_pwdrc
 		fi
@@ -73,7 +73,7 @@ pwdrc_cdd() {
 			pwdrc_old_pwd[$pwdrc_recurse_idx]=""
 			pwdrc_recurse_array[$pwdrc_recurse_idx]=""
 			pwdrc_close_array[$pwdrc_recurse_idx]=""
-			PWDRC_REC_FUNC_ARRAY[$pwdrc_recurse_idx]=""
+			pwdrc_rec_func_array[$pwdrc_recurse_idx]=""
 			((pwdrc_recurse_idx--))
 
 			pwdrc_exec_recurse_function
@@ -81,9 +81,9 @@ pwdrc_cdd() {
 
 	fi
 
-	if [ -f "$alias_file" ]
+	if [ -f "$pwdrc_script" ]
 	then
-		user_perm=`stat -c "%U %a" $alias_file`
+		user_perm=`stat -c "%U %a" $pwdrc_script`
 		if [ "$user_perm" == "$IAM 600" -o \
 			"$user_perm" == "$IAM 500" -o\
 			"$user_perm" == "$IAM 400" ]
@@ -92,35 +92,43 @@ pwdrc_cdd() {
 			unset pwdrc_recurse
             
             # source the pwdrc script in the current directory
-			. $alias_file
+			. $pwdrc_script
 
 			[ -z "$pwdrc_recurse" ] && pwdrc_recurse="0";
-		
+
 			if [ "$PWD" != "${pwdrc_old_pwd[$pwdrc_recurse_idx]}" ]
 			then
+                # directory has changed since last time
+
 				((pwdrc_recurse_idx++))
 				pwdrc_old_pwd[$pwdrc_recurse_idx]="$PWD"
 				pwdrc_recurse_array[$pwdrc_recurse_idx]="$pwdrc_recurse"
 
-				if declare -f close_pwdrc > /dev/null
+				
+				if declare -f recurse_pwdrc > /dev/null
 				then
+                    # recurse_pwdrc function has been declared in the pwdrc_script file
+                    # save in it pwdrc_rec_func_array
+					pwdrc_rec_func_array[$pwdrc_recurse_idx]="`declare -f recurse_pwdrc`"
+					# execute recurse_pwdrc()
+					recurse_pwdrc
+					unset recurse_pwdrc
+				else
+					pwdrc_rec_func_array[$pwdrc_recurse_idx]="0"
+				fi
+
+                if declare -f close_pwdrc > /dev/null
+				then
+                    # close_pwdrc function has been declared in the pwdrc_script file
+                    # save in it pwdrc_close_array
 					pwdrc_close_array[$pwdrc_recurse_idx]="`declare -f close_pwdrc`"
 				else
 					pwdrc_close_array[$pwdrc_recurse_idx]="0"
 				fi
 
-				if declare -f recurse_pwdrc > /dev/null
-				then
-					PWDRC_REC_FUNC_ARRAY[$pwdrc_recurse_idx]="`declare -f recurse_pwdrc`"
-					# execute recurse_pwdrc()
-					recurse_pwdrc
-					unset recurse_pwdrc
-				else
-					PWDRC_REC_FUNC_ARRAY[$pwdrc_recurse_idx]="0"
-				fi
 			fi
         else
-            echo Warning: wrong permission on "$alias_file". Group and Others must have 0 permissions. For example, do chmod 600 $(printf '"%s"' "$alias_file").
+            echo Warning: wrong permission on "$pwdrc_script". Group and Others must have 0 permissions. For example, do chmod 600 $(printf '"%s"' "$pwdrc_script").
         fi
 	fi
 }
