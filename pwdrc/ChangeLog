@@ -1,3 +1,7 @@
+- 0.0.4
+
+- refactoring code to make it more readble
+
 - 0.0.3
 
 - recurse_pwdrc() has been added in the set of definable functions, it is
