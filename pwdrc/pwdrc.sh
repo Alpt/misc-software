@@ -13,19 +13,19 @@
 #
 
 IAM=`whoami`
-pwdrc_script=".$IAM""_pwdrc"
-pwdrc_recurse="0"
-pwdrc_recurse_idx="0"
+alias_file=".$IAM""_pwdrc"
+PWDRC_RECURSE="0"
+PWDRC_RECURSE_INDEX="0"
 
 pwdrc_exec_recurse_function() {
 	local ii
 
-	for ((ii=1; ii <= $pwdrc_recurse_idx; ii++))
+	for ((ii=1; ii <= $PWDRC_RECURSE_INDEX; ii++))
 	do
-		if [ "${pwdrc_rec_func_array[$ii]}" != 0 ]
+		if [ "${PWDRC_REC_FUNC_ARRAY[$ii]}" != 0 ]
 		then
 			# Execute recurse_pwdrc()
-			eval "${pwdrc_rec_func_array[$ii]}"
+			eval "${PWDRC_REC_FUNC_ARRAY[$ii]}"
 			recurse_pwdrc
 			unset recurse_pwdrc
 		fi
@@ -33,103 +33,88 @@ pwdrc_exec_recurse_function() {
 }
 
 pwdrc_cdd() {
-	local still_in_subdir
+	local dir_upper_changed
 
 	PWD_NOW=$PWD
 	
 	[ -z "$1" ] && [ -z "$HOME" ] && cd /
-	[ -z "$1" ] && [ "$HOME" ] && cd "$HOME"
+	[ -z "$1" ] && cd "$HOME"
 	
 	if ! [ -d "$1" -a -x "$1" ]
 	then
-        # fallback to cd
 		cd "$1"
 		return $?
 	fi
-
 	cd "$1"
 
 	# Check if we walked into a subdir or not
-	echo $PWD | grep -q "^${pwdrc_old_pwd[$pwdrc_recurse_idx]}"
-	still_in_subdir=$?
+	echo `pwd` | grep -q "^${PWDRC_OLD_PWD[$PWDRC_RECURSE_INDEX]}"
+	dir_upper_changed=$?
 
-	if [ "$still_in_subdir" == 0 ]
+	if [ "$dir_upper_changed" == 0 ]
 	then
 		pwdrc_exec_recurse_function
-	elif [ "${pwdrc_recurse_array[$pwdrc_recurse_idx]}" == 0 ]
+	elif [ "${PWDRC_RECURSE_ARRAY[$PWDRC_RECURSE_INDEX]}" == 0 -o\
+		"$dir_upper_changed" == 1 ]
 	then
-		if [ "${pwdrc_close_array[$pwdrc_recurse_idx]}" != "0" ]
+		if [ "${PWDRC_CLOSE_ARRAY[$PWDRC_RECURSE_INDEX]}" != "0" ]
 		then
 			# execute close_pwdrc()
-			eval "${pwdrc_close_array[$pwdrc_recurse_idx]}"
+			eval "${PWDRC_CLOSE_ARRAY[$PWDRC_RECURSE_INDEX]}"
 			close_pwdrc
 			unset close_pwdrc
-			pwdrc_recurse="0"
-			pwdrc_close_array[$pwdrc_recurse_idx]="0"
+			PWDRC_RECURSE="0"
+			PWDRC_CLOSE_ARRAY[$PWDRC_RECURSE_INDEX]="0"
 		fi
 
-		if [ "$still_in_subdir" == 1 ]
+		if [ "$dir_upper_changed" == 1 ]
 		then
-			pwdrc_old_pwd[$pwdrc_recurse_idx]=""
-			pwdrc_recurse_array[$pwdrc_recurse_idx]=""
-			pwdrc_close_array[$pwdrc_recurse_idx]=""
-			pwdrc_rec_func_array[$pwdrc_recurse_idx]=""
-			((pwdrc_recurse_idx--))
+			PWDRC_OLD_PWD[$PWDRC_RECURSE_INDEX]=""
+			PWDRC_RECURSE_ARRAY[$PWDRC_RECURSE_INDEX]=""
+			PWDRC_CLOSE_ARRAY[$PWDRC_RECURSE_INDEX]=""
+			PWDRC_REC_FUNC_ARRAY[$PWDRC_RECURSE_INDEX]=""
+			((PWDRC_RECURSE_INDEX--))
 
 			pwdrc_exec_recurse_function
 		fi
 
 	fi
 
-	if [ -f "$pwdrc_script" ]
+	if [ -f "$alias_file" ]
 	then
-		user_perm=`stat -c "%U %a" $pwdrc_script`
+		user_perm=`stat -c "%U %a" $alias_file`
 		if [ "$user_perm" == "$IAM 600" -o \
 			"$user_perm" == "$IAM 500" -o\
 			"$user_perm" == "$IAM 400" ]
 		then	
-
-			unset pwdrc_recurse
-            
-            # source the pwdrc script in the current directory
-			. $pwdrc_script
-
-			[ -z "$pwdrc_recurse" ] && pwdrc_recurse="0";
-
-			if [ "$PWD" != "${pwdrc_old_pwd[$pwdrc_recurse_idx]}" ]
+			unset PWDRC_RECURSE
+			. $alias_file
+			[ -z "$PWDRC_RECURSE" ] && PWDRC_RECURSE="0";
+		
+			if [ "$PWD" != "${PWDRC_OLD_PWD[$PWDRC_RECURSE_INDEX]}" ]
 			then
-                # directory has changed since last time
+				((PWDRC_RECURSE_INDEX++))
+				PWDRC_OLD_PWD[$PWDRC_RECURSE_INDEX]="`pwd`"
+				PWDRC_RECURSE_ARRAY[$PWDRC_RECURSE_INDEX]="$PWDRC_RECURSE"
 
-				((pwdrc_recurse_idx++))
-				pwdrc_old_pwd[$pwdrc_recurse_idx]="$PWD"
-				pwdrc_recurse_array[$pwdrc_recurse_idx]="$pwdrc_recurse"
+				if declare -f close_pwdrc > /dev/null
+				then
+					PWDRC_CLOSE_ARRAY[$PWDRC_RECURSE_INDEX]="`declare -f close_pwdrc`"
+				else
+					PWDRC_CLOSE_ARRAY[$PWDRC_RECURSE_INDEX]="0"
+				fi
 
-				
 				if declare -f recurse_pwdrc > /dev/null
 				then
-                    # recurse_pwdrc function has been declared in the pwdrc_script file
-                    # save in it pwdrc_rec_func_array
-					pwdrc_rec_func_array[$pwdrc_recurse_idx]="`declare -f recurse_pwdrc`"
+					PWDRC_REC_FUNC_ARRAY[$PWDRC_RECURSE_INDEX]="`declare -f recurse_pwdrc`"
 					# execute recurse_pwdrc()
 					recurse_pwdrc
 					unset recurse_pwdrc
 				else
-					pwdrc_rec_func_array[$pwdrc_recurse_idx]="0"
+					PWDRC_REC_FUNC_ARRAY[$PWDRC_RECURSE_INDEX]="0"
 				fi
-
-                if declare -f close_pwdrc > /dev/null
-				then
-                    # close_pwdrc function has been declared in the pwdrc_script file
-                    # save in it pwdrc_close_array
-					pwdrc_close_array[$pwdrc_recurse_idx]="`declare -f close_pwdrc`"
-				else
-					pwdrc_close_array[$pwdrc_recurse_idx]="0"
-				fi
-
 			fi
-        else
-            echo Warning: wrong permission on "$pwdrc_script". Group and Others must have 0 permissions. For example, do chmod 600 $(printf '"%s"' "$pwdrc_script").
-        fi
+		fi
 	fi
 }
 
